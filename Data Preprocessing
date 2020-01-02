@@ -1,0 +1,61 @@
+####   ""Defining feature and then OneHotEncoding these features""  ####
+def one_of_k_encoding(x, allowable_set):
+    if x not in allowable_set:
+        x = allowable_set[-1]
+    return list(map(lambda s: x==s, allowable_set))
+
+def atom_feature(atom):
+    symbol_set = ['C', 'N', 'O', 'S', 'F', 'H', 'Si', 'P', 'Cl', 'Br',
+                  'Li', 'Na', 'K', 'Mg', 'Ca', 'Fe', 'As', 'Al', 'I', 'B',
+                  'V', 'Tl', 'Sb', 'Sn', 'Ag', 'Pd', 'Co', 'Se', 'Ti', 'Zn',
+                  'Ge', 'Cu', 'Au', 'Ni', 'Cd', 'Mn', 'Cr', 'Pt', 'Hg', 'Pb']
+    degree_set = [0,1,2,3,4,5]
+    num_hydrogens_set = [0,1,2,3,4]
+    valency_set = [0,1,2,3,4,5]
+    return np.array(one_of_k_encoding(atom.GetSymbol(), symbol_set) +
+                    one_of_k_encoding(atom.GetDegree(), degree_set) +
+                    one_of_k_encoding(atom.GetTotalNumHs(), num_hydrogens_set) +
+                    one_of_k_encoding(atom.GetImplicitValence(), valency_set) +
+                    [atom.GetIsAromatic()]).astype('float')
+    
+  
+ ####  "" With the help of RDKit,encoded the molecular grph into Adjacency matrix and then to egde_index""  ####
+                   
+  def graph_representation(mol,label, max_atoms):
+    adj = np.zeros((max_atoms, max_atoms))
+    atom_features = np.zeros((max_atoms, 58))
+    num_atoms = mol.GetNumAtoms()
+    adj[0:num_atoms, 0:num_atoms] = Chem.rdmolops.GetAdjacencyMatrix(mol)
+    edge0 = []
+    edge1 = []
+    for i, l in enumerate(adj):
+        for j, k in enumerate(l):
+            if (k == 1):
+                edge0.append(i)
+                edge1.append(j)
+    edge_idx=[edge0,edge1]
+    features_tmp = []
+    for atom in mol.GetAtoms():
+        features_tmp.append(atom_feature(atom))
+    atom_features[0:num_atoms, 0:58] = np.array(features_tmp)
+    return edge_idx, atom_features,label
+    
+    
+    #### "" With the help of PyTorch Geometric library, converted   the input data into graph object. It simplifies the
+    implementation and working with Graph Neural Networks(GNNs)""  ####
+    
+    def graph_d(y_in):
+    graph_data=[]
+    for i,j in y_in.values:
+        mol=Chem.MolFromSmiles(i)
+        edge_index, x, l=graph_representation(mol, j, 40)
+        edge_index=torch.tensor(edge_index,dtype=torch.long)
+        x=torch.tensor(x,dtype=torch.float)
+        l=torch.tensor(l,dtype=torch.float).view(1,-1)
+        d=Data(x=x,edge_index=edge_index,y=l)
+        graph_data.append(d)
+    return graph_data
+    
+    
+    
+    
