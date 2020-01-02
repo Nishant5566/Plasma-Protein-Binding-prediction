@@ -1,0 +1,35 @@
+   #### "" Training the model"" ####
+    
+import torch
+from torch import nn
+from torch_geometric.data import DataLoader
+d_train=graph_info[:1406]
+loader=DataLoader(d_train,batch_size=5,shuffle=True)
+
+model=GAT_network()
+
+class RMSELoss(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.mse = nn.MSELoss()
+    def forward(self, yhat, y):
+        return torch.sqrt(self.mse(yhat, y))
+optimizer = optim.Adam(model.parameters(), lr=0.0005)
+criterion = RMSELoss()
+
+for epoch in range():    ## "" train for specific number of epochs"" ##
+    count=0
+    l=0
+    for data in loader:
+        optimizer.zero_grad()
+        output=model(data)
+        loss=criterion(output,data.y)
+        loss.backward()
+        optimizer.step()
+        l+=loss.item()
+        count+=1
+
+    print(l/count)
+    
+    
+       
