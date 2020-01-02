@@ -1,0 +1,18 @@
+#### ""Testing the model "" #### 
+
+from sklearn.metrics import r2_score
+model=model.eval()
+d_test=graph_info[1406:]
+
+def accuracy_measure(d_test):
+    y_hat = []
+    y=[]
+    for data in d_test:
+        output=model(data)
+        y_hat.append(output.item())
+        y.append(float(data.y.view(1)))
+    return y,y_hat
+y,y_hat = accuracy_measure(d_test)
+r=r2_score(y,y_hat)
+print(r)
+
